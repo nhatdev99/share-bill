@@ -1,0 +1,82 @@
+name: Build iOS (unsigned IPA)
+
+on:
+  workflow_dispatch:        # bấm tay trong tab Actions
+  push:
+    tags: ['v*']            # push tag v1.0.0 cũng tự build
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm        # cần package-lock.json trong repo (chạy npm install local rồi commit)
+
+      # Nếu muốn ghim Xcode cố định thì đổi latest-stable thành vd '16.4'
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Cài dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci --legacy-peer-deps; else npm install --legacy-peer-deps; fi
+          npx expo install --fix
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/CocoaPods
+          key: pods-${{ runner.os }}-${{ hashFiles('package.json', 'package-lock.json') }}
+          restore-keys: pods-${{ runner.os }}-
+
+      - name: Expo prebuild (tạo thư mục ios + pod install)
+        run: npx expo prebuild --platform ios --clean
+
+      - name: Build unsigned .app
+        working-directory: ios
+        run: |
+          set -o pipefail
+          WORKSPACE=$(ls -1 | grep -e '\.xcworkspace$' | head -n 1)
+          SCHEME="${WORKSPACE%.xcworkspace}"
+          echo "Building $WORKSPACE / $SCHEME"
+          echo "SCHEME=$SCHEME" >> "$GITHUB_ENV"
+
+          xcodebuild build \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build_output \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+          2>&1 | tee ../xcodebuild.log
+
+      - name: Đóng gói .ipa
+        working-directory: ios
+        run: |
+          mkdir -p Payload
+          cp -R build_output/Build/Products/Release-iphoneos/*.app Payload/
+          zip -qry "../${SCHEME}-unsigned.ipa" Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.SCHEME }}-unsigned-ipa
+          path: ${{ env.SCHEME }}-unsigned.ipa
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Upload log khi build lỗi
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: xcodebuild.log

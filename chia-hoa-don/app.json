@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "Chia Hoá Đơn",
+    "slug": "chia-hoa-don",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "ios": { "supportsTablet": false, "bundleIdentifier": "com.example.chiahoadon" },
+    "android": { "package": "com.example.chiahoadon" }
+  }
+}
