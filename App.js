@@ -7,7 +7,7 @@ import SplitScreen from './src/screens/SplitScreen';
 import AccountsScreen from './src/screens/AccountsScreen';
 
 const INITIAL = {
-  people: [], items: [], mode: 'items', total: '',
+  people: [], items: [], mode: 'items', total: '', equalCount: '',
   taxPct: '0', tipPct: '0', roundUp: false,
   accounts: [], defaultId: null,
 };

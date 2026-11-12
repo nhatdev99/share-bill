@@ -5,7 +5,7 @@ import { uid } from '../storage';
 import ShareModal from '../components/ShareModal';
 
 export default function SplitScreen({ data, patch, accounts, defaultId, goAccounts }) {
-  const { people, items, mode, total, taxPct, tipPct, roundUp } = data;
+  const { people, items, mode, total, equalCount = '', taxPct, tipPct, roundUp } = data;
   const [personName, setPersonName] = useState('');
   const [itemName, setItemName] = useState('');
   const [itemPrice, setItemPrice] = useState('');
@@ -48,10 +48,11 @@ export default function SplitScreen({ data, patch, accounts, defaultId, goAccoun
   const reset = () =>
     Alert.alert('Xoá hết?', 'Làm lại từ đầu (tài khoản ngân hàng vẫn giữ).', [
       { text: 'Huỷ', style: 'cancel' },
-      { text: 'Xoá', style: 'destructive', onPress: () => patch({ people: [], items: [], total: '', taxPct: '0', tipPct: '0' }) },
+      { text: 'Xoá', style: 'destructive', onPress: () => patch({ people: [], items: [], total: '', equalCount: '', taxPct: '0', tipPct: '0' }) },
     ]);
 
-  const equalAmount = people.length ? result.totals[people[0].id] : 0;
+  const equalPeopleCount = result.count;
+  const equalAmount = result.perPerson;
 
   return (
     <ScrollView contentContainerStyle={s.container} keyboardShouldPersistTaps="handled">
@@ -70,20 +71,50 @@ export default function SplitScreen({ data, patch, accounts, defaultId, goAccoun
       </View>
 
       {/* Người */}
-      <Text style={s.h2}>1. Ai đi ăn?</Text>
-      <View style={s.row}>
-        <TextInput style={[s.input, { flex: 1 }]} placeholder="Tên" value={personName}
-          onChangeText={setPersonName} onSubmitEditing={addPerson} returnKeyType="done" />
-        <Pressable style={s.btn} onPress={addPerson}><Text style={s.btnText}>Thêm</Text></Pressable>
-      </View>
-      <View style={s.chips}>
-        {people.map((p) => (
-          <Pressable key={p.id} style={s.chip} onLongPress={() => removePerson(p.id)}>
-            <Text style={s.chipText}>{p.name}</Text>
-          </Pressable>
-        ))}
-      </View>
-      {people.length > 0 && <Text style={s.hint}>Giữ lâu tên để xoá người</Text>}
+      {mode === 'equal' ? (
+        <>
+          <Text style={s.h2}>1. Số lượng người</Text>
+          <View style={[s.row, { alignItems: 'center' }]}>
+            <Pressable
+              style={[s.stepBtn, equalPeopleCount <= 0 && s.stepBtnDisabled]}
+              disabled={equalPeopleCount <= 0}
+              onPress={() => patch({ equalCount: equalPeopleCount > 1 ? String(equalPeopleCount - 1) : '' })}
+            >
+              <Text style={s.stepBtnText}>−</Text>
+            </Pressable>
+            <TextInput
+              style={[s.input, s.countInput]}
+              placeholder="VD: 4"
+              keyboardType="number-pad"
+              value={String(equalCount)}
+              onChangeText={(v) => patch({ equalCount: v.replace(/\D/g, '') })}
+            />
+            <Pressable
+              style={s.stepBtn}
+              onPress={() => patch({ equalCount: String(equalPeopleCount + 1) })}
+            >
+              <Text style={s.stepBtnText}>+</Text>
+            </Pressable>
+          </View>
+        </>
+      ) : (
+        <>
+          <Text style={s.h2}>1. Ai đi ăn?</Text>
+          <View style={s.row}>
+            <TextInput style={[s.input, { flex: 1 }]} placeholder="Tên" value={personName}
+              onChangeText={setPersonName} onSubmitEditing={addPerson} returnKeyType="done" />
+            <Pressable style={s.btn} onPress={addPerson}><Text style={s.btnText}>Thêm</Text></Pressable>
+          </View>
+          <View style={s.chips}>
+            {people.map((p) => (
+              <Pressable key={p.id} style={s.chip} onLongPress={() => removePerson(p.id)}>
+                <Text style={s.chipText}>{p.name}</Text>
+              </Pressable>
+            ))}
+          </View>
+          {people.length > 0 && <Text style={s.hint}>Giữ lâu tên để xoá người</Text>}
+        </>
+      )}
 
       {/* Nhập tiền */}
       {mode === 'equal' ? (
@@ -143,21 +174,32 @@ export default function SplitScreen({ data, patch, accounts, defaultId, goAccoun
       {/* Kết quả */}
       <Text style={s.h2}>Kết quả</Text>
       <View style={s.card}>
-        {people.length === 0 && <Text style={s.hint}>Chưa có ai.</Text>}
-        {people.map((p) => (
-          <View key={p.id} style={s.resRow}>
-            <Text style={s.resName}>{p.name}</Text>
-            <View style={s.resRight}>
-              <Text style={s.resAmt}>{fmt(result.totals[p.id])}</Text>
-              {mode === 'items' && (
-                <Pressable style={s.qrBtn} disabled={!result.totals[p.id]}
-                  onPress={() => setShare({ title: p.name, amount: result.totals[p.id], note: `Chia hoa don ${p.name}` })}>
-                  <Text style={s.qrText}>QR</Text>
-                </Pressable>
-              )}
+        {mode === 'equal' ? (
+          equalPeopleCount === 0 ? (
+            <Text style={s.hint}>Chưa nhập số người.</Text>
+          ) : (
+            <View style={s.resRow}>
+              <Text style={s.resName}>Mỗi người ({equalPeopleCount} người)</Text>
+              <Text style={s.resAmt}>{fmt(equalAmount)}</Text>
             </View>
-          </View>
-        ))}
+          )
+        ) : (
+          <>
+            {people.length === 0 && <Text style={s.hint}>Chưa có ai.</Text>}
+            {people.map((p) => (
+              <View key={p.id} style={s.resRow}>
+                <Text style={s.resName}>{p.name}</Text>
+                <View style={s.resRight}>
+                  <Text style={s.resAmt}>{fmt(result.totals[p.id])}</Text>
+                  <Pressable style={s.qrBtn} disabled={!result.totals[p.id]}
+                    onPress={() => setShare({ title: p.name, amount: result.totals[p.id], note: `Chia hoa don ${p.name}` })}>
+                    <Text style={s.qrText}>QR</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+          </>
+        )}
         <View style={[s.resRow, s.totalRow]}>
           <Text style={s.resName}>Tổng thu</Text>
           <Text style={s.resAmt}>{fmt(result.grand)}</Text>
@@ -166,7 +208,7 @@ export default function SplitScreen({ data, patch, accounts, defaultId, goAccoun
 
       {mode === 'equal' && (
         <Pressable style={[s.btn, s.bigBtn, !equalAmount && { opacity: 0.4 }]} disabled={!equalAmount}
-          onPress={() => setShare({ title: `Mỗi người (${people.length} người)`, amount: equalAmount, note: 'Chia hoa don' })}>
+          onPress={() => setShare({ title: `Mỗi người (${equalPeopleCount} người)`, amount: equalAmount, note: 'Chia hoa don' })}>
           <Text style={s.btnText}>Chia sẻ hoá đơn · {fmt(equalAmount)}/người</Text>
         </Pressable>
       )}
@@ -201,6 +243,10 @@ const s = StyleSheet.create({
   btn: { backgroundColor: '#2563eb', paddingHorizontal: 16, paddingVertical: 13, borderRadius: 10 },
   bigBtn: { marginTop: 16, alignItems: 'center' },
   btnText: { color: '#fff', fontWeight: '700' },
+  stepBtn: { backgroundColor: '#2563eb', width: 46, height: 46, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  stepBtnDisabled: { opacity: 0.35 },
+  stepBtnText: { color: '#fff', fontSize: 20, fontWeight: '700', lineHeight: 22 },
+  countInput: { flex: 1, textAlign: 'center', fontWeight: '700', fontSize: 16 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
   chip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: '#e8eaee' },
   chipOn: { backgroundColor: '#2563eb' },
