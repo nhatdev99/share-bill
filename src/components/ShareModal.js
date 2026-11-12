@@ -3,6 +3,7 @@ import { Alert, Modal, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, Vi
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import BillCard from './BillCard';
+import { C } from '../theme';
 
 export default function ShareModal({ visible, onClose, accounts, defaultId, title, amount, note, onGoAccounts }) {
   const ref = useRef(null);
@@ -51,7 +52,7 @@ export default function ShareModal({ visible, onClose, accounts, defaultId, titl
             <View style={s.shadow}>
               <BillCard ref={ref} account={account} amount={amount} title={title} note={note} />
             </View>
-            <Pressable style={[s.btn, { marginTop: 20 }]} onPress={share}>
+            <Pressable style={[s.btn, { marginTop: 20, alignSelf: 'stretch' }]} onPress={share}>
               <Text style={s.btnText}>Chia sẻ ảnh</Text>
             </Pressable>
           </ScrollView>
@@ -62,18 +63,18 @@ export default function ShareModal({ visible, onClose, accounts, defaultId, titl
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#f6f7f9' },
-  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
-  h1: { fontSize: 20, fontWeight: '800' },
-  close: { color: '#2563eb', fontWeight: '600' },
-  body: { alignItems: 'center', padding: 16, paddingBottom: 48 },
+  safe: { flex: 1, backgroundColor: C.bg },
+  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16 },
+  h1: { fontSize: 22, fontWeight: '800', color: C.ink },
+  close: { color: C.accent, fontWeight: '700', fontSize: 15 },
+  body: { alignItems: 'center', paddingHorizontal: 20, paddingBottom: 48 },
   empty: { alignItems: 'center', marginTop: 60, gap: 16 },
-  emptyText: { color: '#666' },
-  shadow: { borderRadius: 16, overflow: 'hidden', elevation: 4, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10 },
-  btn: { backgroundColor: '#2563eb', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12 },
-  btnText: { color: '#fff', fontWeight: '700' },
+  emptyText: { color: C.muted },
+  shadow: { borderRadius: 28, overflow: 'hidden', elevation: 6, shadowColor: C.hero, shadowOpacity: 0.12, shadowRadius: 16, shadowOffset: { width: 0, height: 8 } },
+  btn: { backgroundColor: C.accent, height: 56, paddingHorizontal: 24, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  btnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16, justifyContent: 'center' },
-  chip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: '#e8eaee' },
-  chipOn: { backgroundColor: '#2563eb' },
-  chipText: { fontWeight: '500' },
+  chip: { paddingHorizontal: 13, paddingVertical: 7, borderRadius: 999, backgroundColor: C.chipOff },
+  chipOn: { backgroundColor: C.accent },
+  chipText: { fontWeight: '700', fontSize: 13, color: C.muted },
 });

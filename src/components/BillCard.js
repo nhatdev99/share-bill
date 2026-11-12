@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { buildVietQR, removeAccents } from '../vietqr';
 import { fmt } from '../split';
+import { C } from '../theme';
 
 // View này được chụp thành ảnh PNG để chia sẻ.
 const BillCard = forwardRef(function BillCard({ account, amount, title, note }, ref) {
@@ -15,7 +16,7 @@ const BillCard = forwardRef(function BillCard({ account, amount, title, note }, 
       <Text style={s.amount}>{fmt(amount)}</Text>
 
       <View style={s.qrBox}>
-        <QRCode value={payload} size={230} ecl="M" backgroundColor="#fff" />
+        <QRCode value={payload} size={220} ecl="M" backgroundColor="#fff" />
       </View>
 
       <Text style={s.hint}>Quét bằng app ngân hàng · đã điền sẵn số tiền</Text>
@@ -38,16 +39,16 @@ const Row = ({ label, value, bold }) => (
 );
 
 const s = StyleSheet.create({
-  card: { width: 340, backgroundColor: '#fff', padding: 20, alignItems: 'center' },
-  brand: { fontSize: 12, letterSpacing: 2, color: '#888', fontWeight: '700' },
-  title: { fontSize: 18, fontWeight: '700', marginTop: 8 },
-  amount: { fontSize: 34, fontWeight: '800', color: '#2563eb', marginVertical: 8 },
-  qrBox: { padding: 12, borderWidth: 1, borderColor: '#e1e4e8', borderRadius: 12, backgroundColor: '#fff' },
-  hint: { fontSize: 11, color: '#888', marginTop: 8 },
-  info: { alignSelf: 'stretch', marginTop: 14, borderTopWidth: 1, borderColor: '#eee', paddingTop: 10 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4, gap: 12 },
-  label: { color: '#888', fontSize: 13 },
-  value: { fontSize: 14, fontWeight: '600', flexShrink: 1, textAlign: 'right' },
+  card: { width: 340, backgroundColor: '#fff', paddingHorizontal: 24, paddingTop: 26, paddingBottom: 20, alignItems: 'center' },
+  brand: { fontSize: 11, letterSpacing: 2.5, color: C.muted, fontWeight: '800' },
+  title: { fontSize: 19, fontWeight: '800', color: C.ink, marginTop: 10 },
+  amount: { fontSize: 40, fontWeight: '800', color: C.accent, letterSpacing: -1.5, marginTop: 2, marginBottom: 14 },
+  qrBox: { padding: 12, borderWidth: 1, borderColor: C.line, borderRadius: 18, backgroundColor: '#fff' },
+  hint: { fontSize: 12, color: C.muted, fontWeight: '600', marginTop: 10, marginBottom: 14 },
+  info: { alignSelf: 'stretch', borderTopWidth: 1, borderStyle: 'dashed', borderColor: '#D6D2C4', paddingTop: 10 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, gap: 12 },
+  label: { color: C.muted, fontSize: 13 },
+  value: { fontSize: 14, fontWeight: '700', color: C.ink, flexShrink: 1, textAlign: 'right' },
 });
 
 export default BillCard;
